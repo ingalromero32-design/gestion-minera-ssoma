@@ -436,7 +436,6 @@ ${enlaceMaps ? `Ubicación GPS: ${enlaceMaps}` : ""}`;
                 <input
                   type="file"
                   accept="image/*"
-                  capture="environment"
                   onChange={convertirImagenABase64}
                   className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-300 outline-none file:mr-4 file:rounded-lg file:border-0 file:bg-yellow-400 file:px-4 file:py-2 file:font-semibold file:text-slate-950"
                 />
