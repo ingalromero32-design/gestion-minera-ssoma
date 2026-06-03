@@ -1,0 +1,22 @@
+export type ObservacionDB = {
+  id: number;
+  fecha: string;
+  area: string;
+  ubicacion: string;
+  tipo: string;
+  descripcion: string;
+  riesgo: string;
+  responsable: string;
+  cargo_responsable: string | null;
+  celular_responsable: string;
+  fecha_compromiso: string;
+  estado: string;
+  accion_correctiva: string | null;
+  foto_inicial: string | null;
+  foto_cierre: string | null;
+  accion_cierre: string | null;
+  fecha_cierre: string | null;
+  latitud: string | null;
+  longitud: string | null;
+  enlace_google_maps: string | null;
+};
