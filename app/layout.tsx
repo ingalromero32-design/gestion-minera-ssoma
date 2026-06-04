@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import "./globals.css";
@@ -18,12 +18,15 @@ export const metadata: Metadata = {
   description:
     "Aplicación para registro, seguimiento y cierre de observaciones SSOMA en operaciones mineras.",
   manifest: "/manifest.json",
-  themeColor: "#eab308",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "SSOMA Minera",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#eab308",
 };
 
 export default function RootLayout({

@@ -226,19 +226,20 @@ export default function DashboardPage() {
               </Link>
 
               <Link
-                href="/observaciones"
-                className="rounded-xl border border-slate-700 px-5 py-4 text-center font-semibold text-white transition hover:bg-slate-800"
-              >
-                Revisar observaciones
-           <button
-            onClick={() =>
-              generarPDFEjecutivo(observaciones)
-            }
-            className="rounded-xl border border-green-500 px-5 py-4 text-center font-semibold text-green-400 transition hover:bg-green-500 hover:text-white"
-          >
-            Reporte Ejecutivo PDF
-          </button>
-              </Link>
+                  href="/observaciones"
+                  className="rounded-xl border border-slate-700 px-5 py-4 text-center font-semibold text-white transition hover:bg-slate-800"
+                >
+                  Revisar observaciones
+                </Link>
+
+                <button
+                  onClick={() =>
+                    generarPDFEjecutivo(observaciones)
+                  }
+                  className="rounded-xl border border-green-500 px-5 py-4 text-center font-semibold text-green-400 transition hover:bg-green-500 hover:text-white"
+                >
+                  Reporte Ejecutivo PDF
+                </button>
             </div>
 
             <div className="mt-6 rounded-xl border border-slate-800 bg-slate-950 p-4">

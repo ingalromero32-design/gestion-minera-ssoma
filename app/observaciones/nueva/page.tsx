@@ -1,5 +1,6 @@
 "use client";
 
+import { subirImagen } from "@/lib/storage";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
@@ -29,7 +30,7 @@ export default function NuevaObservacionPage() {
   const [cargoResponsable, setCargoResponsable] = useState("");
   const [celularResponsable, setCelularResponsable] = useState("");
   const [fechaCompromiso, setFechaCompromiso] = useState("");
-
+  const [archivoFoto, setArchivoFoto] = useState<File | null>(null);
   const [fotoInicial, setFotoInicial] = useState("");
   const [latitud, setLatitud] = useState("");
   const [longitud, setLongitud] = useState("");
@@ -77,23 +78,7 @@ export default function NuevaObservacionPage() {
     setCargoResponsable(responsableSeleccionado.cargo);
     setCelularResponsable(responsableSeleccionado.celular);
   }
-  function convertirImagenABase64(
-    evento: ChangeEvent<HTMLInputElement>,
-    callback: (valor: string) => void
-  ) {
-    const archivo = evento.target.files?.[0];
-
-    if (!archivo) return;
-
-    const lector = new FileReader();
-
-    lector.onloadend = () => {
-      callback(lector.result as string);
-    };
-
-    lector.readAsDataURL(archivo);
-  }
-
+   
   function capturarUbicacion() {
     if (!navigator.geolocation) {
       alert("Tu navegador no permite capturar ubicación GPS.");
@@ -148,15 +133,31 @@ export default function NuevaObservacionPage() {
     );
   }
 
-  function manejarFotoInicial(evento: React.ChangeEvent<HTMLInputElement>) {
-    const archivo = evento.target.files?.[0];
+    function manejarFotoInicial(
+    evento: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const archivo =
+      evento.target.files?.[0];
 
     if (!archivo) return;
 
+    setArchivoFoto(archivo);
+
     const lector = new FileReader();
 
+    if (!archivo.type.startsWith("image/")) {
+    alert("Solo se permiten imágenes.");
+    return;
+    }
+    if (archivo.size > 5 * 1024 * 1024) {
+    alert("La imagen supera los 5 MB.");
+     return;
+    }
+    
     lector.onloadend = () => {
-    setFotoInicial(lector.result as string);
+      setFotoInicial(
+        lector.result as string
+      );
     };
 
     lector.readAsDataURL(archivo);
@@ -164,6 +165,8 @@ export default function NuevaObservacionPage() {
 
   async function manejarRegistro(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
+    console.log("INICIO REGISTRO");
+    console.log("archivoFoto:", archivoFoto);
 
     if (!area.trim()) {
       alert("Debes seleccionar un área.");
@@ -195,6 +198,34 @@ export default function NuevaObservacionPage() {
       return;
     }
 
+    let urlFotoInicial = "";
+
+    if (archivoFoto) {
+      try {
+        urlFotoInicial = await subirImagen(
+          archivoFoto,
+          "iniciales"
+        );
+            console.log(
+          "URL STORAGE:",
+          urlFotoInicial
+        );
+      } catch (error) {
+        console.error(error);
+
+        alert(
+          "Error al subir imagen"
+        );
+
+        return;
+      }
+    }
+
+          console.log(
+        "ARCHIVO FOTO:",
+        archivoFoto
+      );
+
     const nuevaObservacion: Observacion = {
       id: Date.now(),
       fecha: new Date().toISOString(),
@@ -208,7 +239,7 @@ export default function NuevaObservacionPage() {
       cargoResponsable,
       celularResponsable: celularResponsable.trim(),
       fechaCompromiso,
-      fotoInicial,
+      fotoInicial: urlFotoInicial,
       fotoCierre: "",
       accionCierre: "",
       fechaCierre: "",
