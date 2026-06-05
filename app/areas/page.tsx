@@ -4,11 +4,11 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { Area } from "@/types/area";
 import {
-  cambiarEstadoArea,
-  eliminarArea,
   obtenerAreas,
-  registrarArea,
-} from "@/lib/areasStorage";
+  guardarArea,
+  eliminarArea,
+  cambiarEstadoArea,
+} from "@/lib/areasSupabase";
 
 export default function AreasPage() {
   const [areas, setAreas] = useState<Area[]>([]);
@@ -16,15 +16,23 @@ export default function AreasPage() {
   const [descripcion, setDescripcion] = useState("");
 
   useEffect(() => {
-    setAreas(obtenerAreas());
+  async function cargarAreas() {
+    const data = await obtenerAreas();
+    setAreas(data || []);
+  }
+
+  cargarAreas();
   }, []);
 
   function limpiarFormulario() {
     setNombre("");
     setDescripcion("");
   }
-
-  function manejarRegistro(evento: FormEvent<HTMLFormElement>) {
+   
+    async function manejarRegistro(
+    evento: FormEvent<HTMLFormElement>
+  ) {
+    console.log("BOTON REGISTRAR PRESIONADO");
     evento.preventDefault();
 
     const nombreLimpio = nombre.trim();
@@ -36,45 +44,97 @@ export default function AreasPage() {
     }
 
     const existeArea = areas.some(
-      (area) => area.nombre.trim().toLowerCase() === nombreLimpio.toLowerCase()
+      (area) =>
+        area.nombre.trim().toLowerCase() ===
+        nombreLimpio.toLowerCase()
     );
 
     if (existeArea) {
-      alert("Esta área ya existe. Revisa el listado.");
+      alert("Esta área ya existe.");
       return;
     }
 
-    const nuevaArea: Area = {
-      id: Date.now().toString(),
-      nombre: nombreLimpio,
-      descripcion: descripcionLimpia || "Sin descripción",
-      estado: "Activa",
-      fechaRegistro: new Date().toISOString(),
+    const nuevaArea = {
+    nombre: nombreLimpio,
+    descripcion: descripcionLimpia,
+    estado: "Activa",
+    fechaRegistro: new Date().toISOString(),
     };
 
-    const nuevasAreas = registrarArea(nuevaArea);
-    setAreas(nuevasAreas);
-    limpiarFormulario();
+    try {
+      await guardarArea(nuevaArea);
+
+      const areasActualizadas =
+        await obtenerAreas();
+
+      setAreas(areasActualizadas);
+
+      limpiarFormulario();
+
+      alert(
+        "Área registrada correctamente"
+      );
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        "Error al guardar área"
+      );
+    }
   }
 
-  function manejarCambioEstado(id: string) {
-    const confirmar = confirm("¿Deseas cambiar el estado de esta área?");
-
-    if (!confirmar) return;
-
-    const nuevasAreas = cambiarEstadoArea(id);
-    setAreas(nuevasAreas);
-  }
-
-  function manejarEliminar(id: string) {
+    async function manejarCambioEstado(
+    id: string,
+    estado: "Activa" | "Inactiva"
+  ) {
     const confirmar = confirm(
-      "¿Seguro que deseas eliminar esta área? Esta acción no se puede deshacer."
+      "¿Deseas cambiar el estado de esta área?"
     );
 
     if (!confirmar) return;
 
-    const nuevasAreas = eliminarArea(id);
-    setAreas(nuevasAreas);
+    try {
+      await cambiarEstadoArea(
+        id,
+        estado
+      );
+
+      const areasActualizadas =
+        await obtenerAreas();
+
+      setAreas(areasActualizadas);
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        "Error al actualizar área"
+      );
+    }
+  }
+
+    async function manejarEliminar(
+    id: string
+  ) {
+    const confirmar = confirm(
+      "¿Seguro que deseas eliminar esta área?"
+    );
+
+    if (!confirmar) return;
+
+    try {
+      await eliminarArea(id);
+
+      const areasActualizadas =
+        await obtenerAreas();
+
+      setAreas(areasActualizadas);
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        "Error al eliminar área"
+      );
+    }
   }
 
   const areasActivas = areas.filter((area) => area.estado === "Activa").length;
@@ -218,7 +278,12 @@ export default function AreasPage() {
                       <div className="flex flex-col gap-2 sm:flex-row md:flex-col">
                         <button
                           type="button"
-                          onClick={() => manejarCambioEstado(area.id)}
+                          onClick={() =>
+                          manejarCambioEstado(
+                            area.id,
+                            area.estado
+                          )
+                        }
                           className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                         >
                           {area.estado === "Activa"

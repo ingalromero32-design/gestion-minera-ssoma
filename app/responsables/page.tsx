@@ -4,13 +4,13 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { Area } from "@/types/area";
 import { Responsable } from "@/types/responsable";
-import { obtenerAreas } from "@/lib/areasStorage";
+import { obtenerAreas } from "@/lib/areasSupabase";
 import {
-  agregarResponsable,
+  guardarResponsable,
   cambiarEstadoResponsable,
   eliminarResponsable,
   obtenerResponsables,
-} from "@/lib/responsablesStorage";
+} from "@/lib/responsablesSupabase";
 
 export default function ResponsablesPage() {
   const [responsables, setResponsables] = useState<Responsable[]>([]);
@@ -23,13 +23,17 @@ export default function ResponsablesPage() {
   const [correo, setCorreo] = useState("");
 
   useEffect(() => {
-    setResponsables(obtenerResponsables());
+    async function cargarDatos() {
+      const responsablesData = await obtenerResponsables();
+      setResponsables(responsablesData);
 
-    const areasActivas = obtenerAreas().filter(
-      (item) => item.estado === "Activa"
-    );
+      const areasData = await obtenerAreas();
+      const areasActivas = areasData.filter((item) => item.estado === "Activa");
 
-    setAreas(areasActivas);
+      setAreas(areasActivas);
+    }
+
+    cargarDatos();
   }, []);
 
   function limpiarFormulario() {
@@ -40,7 +44,7 @@ export default function ResponsablesPage() {
     setCorreo("");
   }
 
-  function manejarRegistro(evento: FormEvent<HTMLFormElement>) {
+  async function manejarRegistro(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
 
     if (!nombre.trim()) {
@@ -64,7 +68,7 @@ export default function ResponsablesPage() {
     }
 
     const nuevoResponsable: Responsable = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       nombre: nombre.trim(),
       cargo: cargo.trim(),
       area: area.trim(),
@@ -74,26 +78,82 @@ export default function ResponsablesPage() {
       fechaRegistro: new Date().toISOString(),
     };
 
-    const nuevosResponsables = agregarResponsable(nuevoResponsable);
+      try {
+      await guardarResponsable(
+        nuevoResponsable
+      );
 
-    setResponsables(nuevosResponsables);
-    limpiarFormulario();
+      const responsablesActualizados =
+        await obtenerResponsables();
+
+      setResponsables(
+        responsablesActualizados
+      );
+
+      limpiarFormulario();
+
+      alert(
+        "Responsable guardado correctamente"
+      );
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        "Error al guardar responsable"
+      );
+    }
   }
 
-  function manejarCambioEstado(id: string) {
-    const nuevosResponsables = cambiarEstadoResponsable(id);
-    setResponsables(nuevosResponsables);
+    async function manejarCambioEstado(
+    id: string,
+    estado: "Activo" | "Inactivo"
+  ) {
+    try {
+      await cambiarEstadoResponsable(
+        id,
+        estado
+      );
+
+      const responsablesActualizados =
+        await obtenerResponsables();
+
+      setResponsables(
+        responsablesActualizados
+      );
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        "Error al cambiar estado"
+      );
+    }
   }
 
-  function manejarEliminar(id: string) {
+    async function manejarEliminar(
+    id: string
+  ) {
     const confirmar = confirm(
-      "¿Seguro que deseas eliminar este responsable? Esta acción no se puede deshacer."
+      "¿Seguro que deseas eliminar este responsable?"
     );
 
     if (!confirmar) return;
 
-    const nuevosResponsables = eliminarResponsable(id);
-    setResponsables(nuevosResponsables);
+    try {
+      await eliminarResponsable(id);
+
+      const responsablesActualizados =
+        await obtenerResponsables();
+
+      setResponsables(
+        responsablesActualizados
+      );
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        "Error al eliminar responsable"
+      );
+    }
   }
 
   const responsablesActivos = responsables.filter(
@@ -333,7 +393,7 @@ export default function ResponsablesPage() {
                       <div className="flex flex-col gap-2 md:min-w-36">
                         <button
                           type="button"
-                          onClick={() => manejarCambioEstado(item.id)}
+                          onClick={() => manejarCambioEstado(item.id, item.estado)}
                           className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-semibold transition hover:bg-slate-800"
                         >
                           {item.estado === "Activo"

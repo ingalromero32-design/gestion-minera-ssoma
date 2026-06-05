@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { Area } from "@/types/area";
 import { Observacion } from "@/types/observacion";
-import { obtenerAreas } from "@/lib/areasStorage";
+import { obtenerAreas } from "@/lib/areasSupabase";
 import { agregarObservacion } from "@/lib/observacionesStorage";
 import { Responsable } from "@/types/responsable";
-import { obtenerResponsables } from "@/lib/responsablesStorage";
+import { obtenerResponsables } from "@/lib/responsablesSupabase";
 import {
       guardarObservacionSupabase,
      } from "@/lib/observacionesSupabase";
@@ -36,18 +36,31 @@ export default function NuevaObservacionPage() {
   const [longitud, setLongitud] = useState("");
   const [capturandoGps, setCapturandoGps] = useState(false);
 
- useEffect(() => {
-  const areasActivas = obtenerAreas().filter(
-    (item) => item.estado === "Activa"
-  );
+    useEffect(() => {
+    async function cargarDatos() {
 
-  const responsablesActivos = obtenerResponsables().filter(
-    (item) => item.estado === "Activo"
-  );
+      const areasData = await obtenerAreas();
 
-  setAreas(areasActivas);
-  setResponsables(responsablesActivos);
-}, []);
+    console.log("AREAS:", areasData);
+
+    setAreas(areasData);
+
+    const responsablesData =
+      await obtenerResponsables();
+
+    console.log(
+      "RESPONSABLES:",
+      responsablesData
+    );
+
+    setResponsables(
+      responsablesData
+    );
+
+    }
+
+    cargarDatos();
+  }, []);
 
   function limpiarFormulario() {
     setArea("");
@@ -79,6 +92,7 @@ export default function NuevaObservacionPage() {
     setCelularResponsable(responsableSeleccionado.celular);
   }
    
+
   function capturarUbicacion() {
     if (!navigator.geolocation) {
       alert("Tu navegador no permite capturar ubicación GPS.");
@@ -255,9 +269,7 @@ export default function NuevaObservacionPage() {
     try {
   console.log("ANTES DE GUARDAR");
 
-    await guardarObservacionSupabase(
-      nuevaObservacion
-    );
+    await guardarObservacionSupabase(nuevaObservacion);
 
     console.log("GUARDADO CORRECTAMENTE");
 

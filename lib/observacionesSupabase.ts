@@ -71,18 +71,26 @@ export async function guardarObservacionSupabase(
       longitud: observacion.longitud,
       enlace_google_maps:
         observacion.enlaceGoogleMaps,
-    });
+    })
+     .select();
 
-    console.log("DATA:", data);
-    console.log("ERROR:", error);
+    console.log("INSERT DATA:");
+    console.log(data);
+
+    console.log("ERROR:");
+    console.log(error);
 
   if (error) {
-  console.log("ERROR COMPLETO:");
-  console.log(JSON.stringify(error, null, 2));
+  console.log("ERROR COMPLETO:", error);
 
-  throw new Error(
-    JSON.stringify(error, null, 2)
+  alert(
+    `CODE: ${error.code}
+MESSAGE: ${error.message}
+DETAILS: ${error.details}
+HINT: ${error.hint}`
   );
+
+  throw error;
 }
 }
 
