@@ -149,42 +149,62 @@ export async function eliminarObservacionSupabase(
 export async function actualizarObservacionSupabase(
   observacion: Observacion
 ) {
-  const { error } = await supabase
-    .from("observaciones")
-    .update({
-      fecha: observacion.fecha,
-      area: observacion.area,
-      ubicacion: observacion.ubicacion,
-      tipo: observacion.tipo,
-      descripcion: observacion.descripcion,
-      riesgo: observacion.riesgo,
-      responsable: observacion.responsable,
-      cargo_responsable:
-        observacion.cargoResponsable,
-      celular_responsable:
-        observacion.celularResponsable,
-      fecha_compromiso:
-        observacion.fechaCompromiso,
-      estado: observacion.estado,
-      accion_correctiva:
-        observacion.accionCorrectiva,
-      foto_inicial:
-        observacion.fotoInicial,
-      foto_cierre:
-        observacion.fotoCierre,
-      accion_cierre:
-        observacion.accionCierre,
-      fecha_cierre:
-        observacion.fechaCierre,
-      latitud: observacion.latitud,
-      longitud: observacion.longitud,
-      enlace_google_maps:
-        observacion.enlaceGoogleMaps,
-    })
-    .eq("id", observacion.id);
+
+    console.log(
+    "================================="
+  );
+
+  console.trace(
+    "QUIEN ESTA LLAMANDO UPDATE"
+  );
+
+  console.log(
+    "FOTO RECIBIDA:",
+    observacion.fotoCierre
+  );
+
+  console.log(
+    "================================="
+  );
+
+  console.log("ID:", observacion.id);
+  console.log("FOTO:", observacion.fotoCierre);
+
+  console.log("ID:", observacion.id);
+
+  console.log(
+    "FOTO CIERRE:",
+    observacion.fotoCierre
+  );
+
+  const { data, error } =
+    await supabase
+      .from("observaciones")
+      .update({
+        estado: observacion.estado,
+        accion_cierre:
+          observacion.accionCierre,
+        fecha_cierre:
+          observacion.fechaCierre,
+        foto_cierre:
+          observacion.fotoCierre,
+      })
+      .eq("id", observacion.id)
+      .select();
+
+  console.log(
+    "UPDATE DATA:",
+    data
+  );
+
+  console.log(
+    "UPDATE ERROR:",
+    error
+  );
 
   if (error) {
-    console.error(error);
     throw error;
   }
+
+  return data;
 }

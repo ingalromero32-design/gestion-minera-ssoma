@@ -15,8 +15,7 @@ export default function DetalleObservacionPage() {
   const router = useRouter();
 
   const [observacion, setObservacion] = useState<Observacion | null>(null);
-  const [accionCierre, setAccionCierre] = useState("");
-  const [fotoCierre, setFotoCierre] = useState("");
+
 
   useEffect(() => {
     const idParametro = Number(params.id);
@@ -26,8 +25,7 @@ export default function DetalleObservacionPage() {
 
       if (data) {
         setObservacion(data);
-        setAccionCierre(data.accionCierre || "");
-        setFotoCierre(data.fotoCierre || "");
+        
       }
     }
 
@@ -45,9 +43,7 @@ export default function DetalleObservacionPage() {
     }
 
     setObservacion(observacionActualizada);
-    setAccionCierre(observacionActualizada.accionCierre || "");
-    setFotoCierre(observacionActualizada.fotoCierre || "");
-  }
+    }
 
   async function cambiarAEnProceso() {
     if (!observacion) return;
@@ -66,47 +62,7 @@ export default function DetalleObservacionPage() {
     await actualizarObservacionActualizada(observacionActualizada);
   }
 
-  function convertirImagenABase64(evento: ChangeEvent<HTMLInputElement>) {
-    const archivo = evento.target.files?.[0];
-
-    if (!archivo) return;
-
-    const lector = new FileReader();
-
-    lector.onloadend = () => {
-      setFotoCierre(lector.result as string);
-    };
-
-    lector.readAsDataURL(archivo);
-  }
-
-  function cerrarObservacion(evento: FormEvent<HTMLFormElement>) {
-    evento.preventDefault();
-
-    if (!observacion) return;
-
-    if (!accionCierre.trim()) {
-      alert("Debes ingresar la acción ejecutada para cerrar la observación.");
-      return;
-    }
-
-    const confirmar = confirm(
-      "¿Confirmas el cierre de esta observación SSOMA?"
-    );
-
-    if (!confirmar) return;
-
-    const observacionActualizada: Observacion = {
-      ...observacion,
-      estado: "Cerrado",
-      accionCierre: accionCierre.trim(),
-      fechaCierre: new Date().toISOString(),
-      fotoCierre,
-    };
-
-    actualizarObservacionActualizada(observacionActualizada);
-  }
-
+  
   function generarPDF() {
     if (!observacion) return;
 
@@ -125,17 +81,17 @@ export default function DetalleObservacionPage() {
     const enlaceMaps = obtenerEnlaceMaps();
 
     const mensaje = `OBSERVACIÓN SSOMA
-Área: ${observacion.area}
-Ubicación: ${observacion.ubicacion}
-Riesgo: ${observacion.riesgo}
-Estado: ${observacion.estado}
-Responsable: ${observacion.responsable}
-Fecha compromiso: ${observacion.fechaCompromiso}
+    Área: ${observacion.area}
+    Ubicación: ${observacion.ubicacion}
+    Riesgo: ${observacion.riesgo}
+    Estado: ${observacion.estado}
+    Responsable: ${observacion.responsable}
+    Fecha compromiso: ${observacion.fechaCompromiso}
 
-Descripción:
-${observacion.descripcion}
+    Descripción:
+    ${observacion.descripcion}
 
-${enlaceMaps ? `Ubicación GPS: ${enlaceMaps}` : ""}`;
+    ${enlaceMaps ? `Ubicación GPS: ${enlaceMaps}` : ""}`;
 
     return encodeURIComponent(mensaje);
   }
@@ -307,26 +263,9 @@ ${enlaceMaps ? `Ubicación GPS: ${enlaceMaps}` : ""}`;
                 </div>
               </div>
 
-              {observacion.accionCierre && (
-                <div className="md:col-span-2">
-                  <p className="mb-2 text-sm font-semibold text-slate-400">
-                    Acción ejecutada para cierre
-                  </p>
+              
 
-                  <div className="rounded-xl border border-green-800 bg-slate-950 p-4">
-                    <p className="whitespace-pre-line text-sm text-slate-300">
-                      {observacion.accionCierre}
-                    </p>
-
-                    <p className="mt-3 text-xs text-slate-500">
-                      Fecha de cierre: {mostrarFecha(observacion.fechaCierre)}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
+                        <div className="mt-6 flex flex-wrap gap-4">
               {observacion.estado === "Pendiente" && (
                 <button
                   type="button"
@@ -337,17 +276,27 @@ ${enlaceMaps ? `Ubicación GPS: ${enlaceMaps}` : ""}`;
                 </button>
               )}
 
+              {observacion.estado !== "Cerrado" && (
+                <Link
+                  href={`/observaciones/${observacion.id}/cerrar`}
+                  className="rounded-xl bg-green-500 px-5 py-3 text-center font-semibold text-white transition hover:bg-green-400"
+                >
+                  Ir a cierre
+                </Link>
+              )}
+
               {linkWhatsApp && (
                 <a
                   href={linkWhatsApp}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-xl bg-green-500 px-5 py-3 text-center font-semibold text-white transition hover:bg-green-400"
+                  className="rounded-xl bg-emerald-600 px-5 py-3 text-center font-semibold text-white transition hover:bg-emerald-500"
                 >
                   Enviar WhatsApp
                 </a>
               )}
             </div>
+          </div>
           </div>
 
           <div className="grid gap-6">
@@ -397,96 +346,7 @@ ${enlaceMaps ? `Ubicación GPS: ${enlaceMaps}` : ""}`;
               </div>
             </div>
           </div>
-        </div>
-
-        {observacion.estado !== "Cerrado" ? (
-          <form
-            onSubmit={cerrarObservacion}
-            className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-4 md:p-6"
-          >
-            <h2 className="text-lg font-bold md:text-xl">
-              Cierre de observación
-            </h2>
-
-            <p className="mt-2 text-sm text-slate-400">
-              Registra la acción ejecutada y adjunta una foto de cierre. Esta
-              información se guarda recién al cerrar la observación.
-            </p>
-
-            <div className="mt-5 grid gap-5 md:grid-cols-2">
-              <div className="md:col-span-2">
-                <label className="mb-2 block text-sm font-semibold text-slate-300">
-                  Acción ejecutada para cierre
-                </label>
-
-                <textarea
-                  value={accionCierre}
-                  onChange={(evento) => setAccionCierre(evento.target.value)}
-                  placeholder="Ejemplo: Se retiró material suelto, se señalizó la zona y se comunicó al personal responsable."
-                  rows={4}
-                  className="w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-yellow-400"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="mb-2 block text-sm font-semibold text-slate-300">
-                  Foto de cierre
-                </label>
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={convertirImagenABase64}
-                  className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-300 outline-none file:mr-4 file:rounded-lg file:border-0 file:bg-yellow-400 file:px-4 file:py-2 file:font-semibold file:text-slate-950"
-                />
-
-                {fotoCierre && (
-                  <div className="mt-4 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
-                    <img
-                      src={fotoCierre}
-                      alt="Foto de cierre"
-                      className="max-h-80 w-full object-contain"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <button
-                type="submit"
-                className="w-full rounded-xl bg-green-500 px-5 py-4 font-semibold text-white transition hover:bg-green-400 md:w-auto"
-              >
-                Cerrar observación
-              </button>
-            </div>
-          </form>
-        ) : (
-          <div className="mt-6 rounded-2xl border border-green-800 bg-slate-900 p-4 md:p-6">
-            <h2 className="text-lg font-bold text-green-400">
-              Observación cerrada
-            </h2>
-
-            <p className="mt-2 text-sm text-slate-400">
-              Esta observación ya fue cerrada y cuenta con acción ejecutada de
-              cierre.
-            </p>
-
-            {observacion.fotoCierre && (
-              <div className="mt-4">
-                <p className="mb-2 text-sm font-semibold text-slate-400">
-                  Evidencia de cierre
-                </p>
-
-                <img
-                  src={observacion.fotoCierre}
-                  alt="Foto de cierre"
-                  className="max-h-96 w-full rounded-xl border border-slate-800 object-contain"
-                />
-              </div>
-            )}
           </div>
-        )}
       </section>
     </main>
   );

@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import {
-  actualizarObservacion,
-  obtenerObservaciones,
-} from "@/lib/observacionesStorage";
+  actualizarObservacionSupabase,
+  obtenerObservacionPorIdSupabase,
+} from "@/lib/observacionesSupabase";
+
+import { subirImagen } from "@/lib/storage";
 import { Observacion } from "@/types/observacion";
 
 export default function CerrarObservacionPage() {
@@ -19,62 +21,155 @@ export default function CerrarObservacionPage() {
   const [fotoCierre, setFotoCierre] = useState("");
 
   useEffect(() => {
+  async function cargarObservacion() {
     const id = Number(params.id);
-    const observaciones = obtenerObservaciones();
-    const encontrada = observaciones.find((item) => item.id === id);
 
-    if (encontrada) {
-      setObservacion(encontrada);
-      setAccionCierre(encontrada.accionCierre || "");
-      setFechaCierre(
-        encontrada.fechaCierre || new Date().toISOString().split("T")[0]
-      );
-      setFotoCierre(encontrada.fotoCierre || "");
-    }
-  }, [params.id]);
+    const encontrada =
+      await obtenerObservacionPorIdSupabase(id);
+      console.log("OBSERVACION CARGADA");
+      console.log(encontrada);
 
-  function convertirImagenABase64(event: ChangeEvent<HTMLInputElement>) {
-    const archivo = event.target.files?.[0];
+    if (!encontrada) return;
 
-    if (!archivo) {
-      return;
-    }
+    setObservacion(encontrada);
 
-    const lector = new FileReader();
+    setAccionCierre(
+      encontrada.accionCierre || ""
+    );
 
-    lector.onloadend = () => {
-      setFotoCierre(lector.result as string);
-    };
+    setFechaCierre(
+      encontrada.fechaCierre ||
+        new Date()
+          .toISOString()
+          .split("T")[0]
+    );
 
-    lector.readAsDataURL(archivo);
+    setFotoCierre(
+      encontrada.fotoCierre || ""
+    );
   }
 
-  function guardarCierre(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  cargarObservacion();
+}, [params.id]);
 
-    if (!observacion) {
-      return;
-    }
+  async function cargarFotoCierre(
+  event: ChangeEvent<HTMLInputElement>
+) {
+  const archivo =
+    event.target.files?.[0];
 
-    if (!accionCierre.trim()) {
-      alert("Debes registrar la acción ejecutada para el cierre.");
-      return;
-    }
+  if (!archivo) return;
 
-    const observacionActualizada: Observacion = {
+  try {
+    const url =
+      await subirImagen(
+        archivo,
+        "cierres"
+      );
+
+    console.log("URL NUEVA:", url);
+    console.log("TIPO URL:", typeof url);
+    console.log("CONTIENE HTTP:", url.includes("http"));
+    console.log(
+        "ANTES DE SET:",
+        url
+      );
+
+  setFotoCierre(url);
+
+  setTimeout(() => {
+    console.log(
+      "ESTADO FOTO:",
+      fotoCierre
+    );
+  }, 1000);
+
+    setFotoCierre(url);
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      "Error al subir imagen"
+    );
+  }
+}
+
+async function guardarCierre(
+  event: FormEvent<HTMLFormElement>
+) {
+  event.preventDefault();
+
+  if (!observacion) {
+    return;
+  }
+
+  if (!accionCierre.trim()) {
+    alert(
+      "Debes registrar la acción ejecutada."
+    );
+
+    return;
+  }
+
+  try {
+    const observacionActualizada = {
       ...observacion,
       accionCierre,
       fechaCierre,
       fotoCierre,
-      estado: "Cerrado",
+      estado: "Cerrado" as const,
     };
 
-    actualizarObservacion(observacionActualizada);
+    console.log("=================================");
+    console.log("OBSERVACION COMPLETA");
+    console.log(observacion);
+    console.log("=================================");
 
-    alert("Observación cerrada correctamente.");
+    console.log("=================================");
+    console.log("FOTO CIERRE");
+    console.log(fotoCierre);
+    console.log("=================================");
+    console.log(
+      "FOTO CIERRE ANTES DE GUARDAR:",
+      fotoCierre
+    );
+    console.log(
+      "ES BASE64:",
+      fotoCierre.startsWith("data:")
+    );
 
-    router.push(`/observaciones/${observacion.id}`);
+    console.log(
+      "ES URL:",
+      fotoCierre.startsWith("http")
+    );
+    console.log("OBJETO ACTUALIZADO");
+    console.log(observacionActualizada);
+
+    console.log(
+      "TIPO FOTO:",
+      observacionActualizada.fotoCierre
+    );
+    
+
+    await actualizarObservacionSupabase(
+      observacionActualizada
+    );
+
+    alert(
+      "Observación cerrada correctamente."
+    );
+
+    router.push(
+      `/observaciones/${observacion.id}`
+    );
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      "Error al cerrar observación."
+    );
   }
+}
 
   if (!observacion) {
     return (
@@ -154,7 +249,7 @@ export default function CerrarObservacionPage() {
             <input
               type="file"
               accept="image/*"
-              onChange={convertirImagenABase64}
+              onChange={cargarFotoCierre}
               className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-white"
             />
 
