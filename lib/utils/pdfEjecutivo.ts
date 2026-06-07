@@ -8,7 +8,7 @@ export function generarPDFEjecutivo(
 
   const hoy = new Date().toLocaleDateString();
 
-  const total = observaciones.length;
+  const total = observaciones.length; 
 
   const pendientes = observaciones.filter(
     (o) => o.estado === "Pendiente"
@@ -50,98 +50,290 @@ export function generarPDFEjecutivo(
     total > 0
       ? ((cerradas / total) * 100).toFixed(1)
       : "0";
+      
+  const cumplimientoNumero =
+  Number(cumplimiento);
 
-  pdf.setFontSize(18);
+  pdf.setFillColor(15, 23, 42);
+  pdf.rect(0, 0, 210, 30, "F");
+
+  pdf.setTextColor(255, 255, 255);
+
+  pdf.setFontSize(20);
 
   pdf.text(
     "REPORTE EJECUTIVO SSOMA",
     105,
     15,
-    { align: "center" }
+    {
+      align: "center",
+    }
   );
 
   pdf.setFontSize(10);
 
   pdf.text(
     `Fecha de emisión: ${hoy}`,
-    15,
-    25
+    105,
+    23,
+    {
+      align: "center",
+    }
   );
 
-  pdf.line(10, 30, 200, 30);
+  pdf.setTextColor(0, 0, 0);
+
+  function tarjeta(
+    x: number,
+    y: number,
+    titulo: string,
+    valor: string | number,
+    color: number[]
+  ) {
+    pdf.setFillColor(
+      color[0],
+      color[1],
+      color[2]
+    );
+
+    pdf.roundedRect(
+      x,
+      y,
+      42,
+      22,
+      3,
+      3,
+      "F"
+    );
+
+    pdf.setTextColor(
+      255,
+      255,
+      255
+    );
+
+    pdf.setFontSize(9);
+
+    pdf.text(
+      titulo,
+      x + 3,
+      y + 7
+    );
+
+    pdf.setFontSize(14);
+
+    pdf.text(
+      String(valor),
+      x + 3,
+      y + 17
+    );
+
+    pdf.setTextColor(
+      0,
+      0,
+      0
+    );
+  }
+
+  tarjeta(
+    15,
+    40,
+    "TOTAL",
+    total,
+    [59, 130, 246]
+  );
+
+  tarjeta(
+    62,
+    40,
+    "CERRADAS",
+    cerradas,
+    [34, 197, 94]
+  );
+
+  tarjeta(
+    109,
+    40,
+    "VENCIDAS",
+    vencidas,
+    [239, 68, 68]
+  );
+
+  tarjeta(
+    156,
+    40,
+    "CUMPLIMIENTO",
+    `${cumplimiento}%`,
+    [234, 179, 8]
+  );
+
+  pdf.line(10, 100, 200, 100);
 
   pdf.setFontSize(13);
 
   pdf.text(
-    "RESUMEN GENERAL",
+    "CUMPLIMIENTO GENERAL",
     15,
-    40
+    75
   );
 
-  pdf.setFontSize(10);
-
-  pdf.text(
-    `Total observaciones: ${total}`,
-    20,
-    50
+  pdf.setFillColor(
+    245,
+    245,
+    245
   );
 
-  pdf.text(
-    `Pendientes: ${pendientes}`,
-    20,
-    58
-  );
-
-  pdf.text(
-    `En proceso: ${enProceso}`,
-    20,
-    66
-  );
-
-  pdf.text(
-    `Cerradas: ${cerradas}`,
-    20,
-    74
-  );
-
-  pdf.text(
-    `Vencidas: ${vencidas}`,
-    20,
-    82
-  );
-
-  pdf.text(
-    `Cumplimiento: ${cumplimiento}%`,
-    20,
-    90
-  );
-
-  pdf.line(10, 98, 200, 98);
-
-  pdf.setFontSize(13);
-
-  pdf.text(
-    "RESUMEN POR RIESGO",
+  pdf.roundedRect(
     15,
+    80,
+    180,
+    18,
+    3,
+    3,
+    "F"
+  );
+
+  pdf.setFillColor(
+    220,
+    220,
+    220
+  );
+
+  pdf.roundedRect(
+    25,
+    87,
+    140,
+    6,
+    2,
+    2,
+    "F"
+  );
+
+  let colorCumplimiento = [239,68,68];
+
+  if (cumplimientoNumero >= 50)
+    colorCumplimiento = [249,115,22];
+
+  if (cumplimientoNumero >= 80)
+    colorCumplimiento = [34,197,94];
+
+  pdf.setFillColor(
+    colorCumplimiento[0],
+    colorCumplimiento[1],
+    colorCumplimiento[2]
+  );
+
+  pdf.roundedRect(
+    25,
+    87,
+    (140 * cumplimientoNumero) /
+      100,
+    6,
+    2,
+    2,
+    "F"
+  );
+
+  pdf.setFontSize(16);
+
+  pdf.text(
+    `${cumplimiento}%`,
+    170,
+    91
+  );
+
+  pdf.setFontSize(9);
+
+  pdf.text(
+    "Meta SSOMA: 100%",
+    25,
+    97
+  );
+
+  pdf.setDrawColor(
+  180,
+  180,
+  180
+  );
+
+  // jsPDF type definitions may not include setLineDash; cast to any to avoid type error
+  (pdf as any).setLineDash([2, 2], 0);
+
+  (pdf as any).setLineDash([2, 2], 0);
+
+  pdf.line(
+    10,
+    108,
+    200,
     108
   );
 
+  (pdf as any).setLineDash([], 0);
+
+  // reset line dash
+  (pdf as any).setLineDash([], 0);
+  pdf.setFontSize(13);
+
+  pdf.setTextColor(220,38,38);
+
+  pdf.text(
+    "ANALISIS DE RIESGOS",
+    15,
+    115
+  );
+
+  pdf.setTextColor(0,0,0);
+
   pdf.setFontSize(10);
 
-  pdf.text(`Bajo: ${bajo}`, 20, 118);
-  pdf.text(`Medio: ${medio}`, 20, 126);
-  pdf.text(`Alto: ${alto}`, 20, 134);
-  pdf.text(`Crítico: ${critico}`, 20, 142);
+  pdf.setFillColor(34,197,94);
 
-  pdf.line(10, 150, 200, 150);
+  pdf.rect(20,125,5,5,"F");
+
+  pdf.text(`Bajo: ${bajo}`,30,129);
+
+  pdf.setFillColor(250,204,21);
+
+  pdf.rect(20,135,5,5,"F");
+
+  pdf.text(`Medio: ${medio}`,30,139);
+
+  pdf.setFillColor(249,115,22);
+
+  pdf.rect(20,145,5,5,"F");
+
+  pdf.text(`Alto: ${alto}`,30,149);
+
+  pdf.setFillColor(220,38,38);
+
+  pdf.rect(20,155,5,5,"F");
+
+  pdf.text(`Crítico: ${critico}`,30,159);
+
+  pdf.setDrawColor(180,180,180);
+
+  (pdf as any).setLineDash([2, 2], 0);
+
+  pdf.line(
+    10,
+    170,
+    200,
+    170
+  );
+
+  (pdf as any).setLineDash([], 0);
 
   pdf.setFontSize(13);
 
+  pdf.setTextColor(37,99,235);
+
   pdf.text(
-    "RESUMEN POR ÁREA",
+    "DISTRIBUCION POR AREA",
     15,
-    160
+    180
   );
+
+  pdf.setTextColor(0,0,0);
 
   const resumenArea = observaciones.reduce(
     (acc: Record<string, number>, item) => {
@@ -152,7 +344,7 @@ export function generarPDFEjecutivo(
     {}
   );
 
-  let y = 170;
+  let y = 190;
 
   Object.entries(resumenArea).forEach(
     ([area, cantidad]) => {
@@ -164,6 +356,35 @@ export function generarPDFEjecutivo(
 
       y += 8;
     }
+  );
+
+  (pdf as any).setLineDash([2, 2], 0);
+
+  const yPie = y + 10;
+
+  (pdf as any).setLineDash([2, 2], 0);
+
+  pdf.line(
+    10,
+    yPie,
+    200,
+    yPie
+  );
+
+ (pdf as any).setLineDash([], 0);
+
+ pdf.setFontSize(8);
+
+  pdf.text(
+    "Sistema de Gestión SSOMA",
+    15,
+    yPie + 7
+  );
+
+  pdf.text(
+    `Generado: ${new Date().toLocaleString()}`,
+    110,
+    yPie + 7
   );
 
   pdf.save(
